@@ -7,7 +7,10 @@ test.use({ storageState: STORAGE_STATE_PATH });
 async function cleanUserRecipes(baseURL: string) {
   const response = await fetch(`${baseURL}/api/test-cleanup`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "x-test-cleanup-secret": process.env.TEST_CLEANUP_SECRET ?? "",
+    },
     body: JSON.stringify({ userId: TEST_USER_ID }),
   });
   if (!response.ok) {

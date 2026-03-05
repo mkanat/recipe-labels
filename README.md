@@ -57,6 +57,9 @@ AUTH_GOOGLE_SECRET="your-google-oauth-client-secret"
 
 # Local SQLite Database
 DATABASE_URL="file:local.db"
+
+# Required for E2E tests — protects the test-cleanup API endpoint
+TEST_CLEANUP_SECRET="generate-a-random-secure-string"
 ```
 
 > **Production note:** When deploying to production, set both `BETTER_AUTH_URL` and `NEXT_PUBLIC_BASE_URL` to `https://recipe.kanat.us`.

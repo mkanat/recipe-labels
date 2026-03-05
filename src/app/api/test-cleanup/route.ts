@@ -10,6 +10,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Not available in production" }, { status: 403 });
   }
 
+  const secret = process.env.TEST_CLEANUP_SECRET;
+  if (!secret || req.headers.get("x-test-cleanup-secret") !== secret) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const { userId } = await req.json();
   if (!userId || typeof userId !== "string") {
     return NextResponse.json({ error: "userId required" }, { status: 400 });

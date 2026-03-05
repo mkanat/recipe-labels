@@ -80,14 +80,18 @@ export async function updateRecipe(recipeId: string, data: Partial<RecipeInput>)
       return { error: "Instructions must be 200 characters or less" };
     }
 
-    // Fetch current recipe to build a full snapshot
-    const existing = await db.select().from(recipes).where(eq(recipes.id, recipeId));
+    // Verify ownership and fetch current recipe to build a full snapshot
+    const existing = await db
+      .select({ recipe: recipes })
+      .from(recipes)
+      .innerJoin(userRecipes, eq(userRecipes.recipeId, recipes.id))
+      .where(and(eq(recipes.id, recipeId), eq(userRecipes.userId, session.user.id)));
 
     if (existing.length === 0) {
       return { error: "Recipe not found" };
     }
 
-    const current = existing[0];
+    const current = existing[0].recipe;
     const now = new Date();
 
     const updatedFields = {
@@ -132,12 +136,16 @@ export async function deleteRecipe(recipeId: string) {
       return { error: "Unauthorized" };
     }
 
-    // Fetch current state before deleting so restore can bring it back
-    const current = await db.select().from(recipes).where(eq(recipes.id, recipeId));
+    // Verify ownership and fetch current state before deleting so restore can bring it back
+    const current = await db
+      .select({ recipe: recipes })
+      .from(recipes)
+      .innerJoin(userRecipes, eq(userRecipes.recipeId, recipes.id))
+      .where(and(eq(recipes.id, recipeId), eq(userRecipes.userId, session.user.id)));
     if (current.length === 0) {
       return { error: "Recipe not found" };
     }
-    const pre = current[0];
+    const pre = current[0].recipe;
 
     // Soft delete
     await db
@@ -208,13 +216,17 @@ export async function restoreRecipe(historyId: string) {
       return { error: "Unauthorized" };
     }
 
-    const records = await db.select().from(recipeHistory).where(eq(recipeHistory.id, historyId));
+    const records = await db
+      .select({ history: recipeHistory })
+      .from(recipeHistory)
+      .innerJoin(userRecipes, eq(userRecipes.recipeId, recipeHistory.recipeId))
+      .where(and(eq(recipeHistory.id, historyId), eq(userRecipes.userId, session.user.id)));
 
     if (records.length === 0) {
       return { error: "History record not found" };
     }
 
-    const snapshot = records[0].snapshot as {
+    const snapshot = records[0].history.snapshot as {
       id: string;
       temperature: number;
       time: number;
