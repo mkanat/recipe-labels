@@ -1,20 +1,15 @@
 "use client";
 
 import { SwipeableRow } from "./ui/swipeable-row";
-
-export interface Recipe {
-  id: string;
-  temperature: number;
-  time: number;
-  instructions: string;
-}
+import type { Recipe } from "@/types/recipe";
 
 interface RecipeListProps {
   recipes: Recipe[];
   onDelete: (id: string) => void;
+  onEdit?: (recipe: Recipe) => void;
 }
 
-export function RecipeList({ recipes, onDelete }: RecipeListProps) {
+export function RecipeList({ recipes, onDelete, onEdit }: RecipeListProps) {
   if (recipes.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center space-y-4 rounded-3xl border border-dashed border-zinc-800 p-12 text-center">
@@ -46,6 +41,17 @@ export function RecipeList({ recipes, onDelete }: RecipeListProps) {
           <SwipeableRow onSwipeRight={() => onDelete(recipe.id)} swipeThreshold={120}>
             <div className="flex min-h-[5rem] flex-col justify-center space-y-2 rounded-2xl border border-zinc-800/60 bg-zinc-900/80 p-5 shadow-lg backdrop-blur-md transition-colors hover:bg-zinc-800/80">
               <div className="flex items-center justify-between">
+                {onEdit && (
+                  <button
+                    onClick={() => onEdit(recipe)}
+                    className="absolute right-4 top-4 rounded-lg p-1.5 text-zinc-500 transition-colors hover:bg-zinc-700 hover:text-zinc-200"
+                    aria-label="Edit recipe"
+                  >
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+                )}
                 <div className="flex space-x-4">
                   <div className="flex items-center space-x-1.5 rounded-full bg-rose-500/10 px-3 py-1 font-mono text-sm font-semibold text-rose-400">
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

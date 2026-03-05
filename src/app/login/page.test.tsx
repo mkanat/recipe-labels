@@ -23,7 +23,7 @@ describe("Login Page", () => {
 
     expect(signIn.social).toHaveBeenCalledWith({
       provider: "google",
-      callbackURL: "/dashboard",
+      callbackURL: "/",
     });
   });
 });

@@ -2,13 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "./ui/button";
-
-export interface Recipe {
-  id: string;
-  temperature: number;
-  time: number;
-  instructions: string;
-}
+import type { Recipe } from "@/types/recipe";
 
 interface PrintUIProps {
   recipes: Recipe[];

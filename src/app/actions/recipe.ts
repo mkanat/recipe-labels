@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { recipes, userRecipes, recipeHistory } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import crypto from "crypto";
 
 interface RecipeInput {
@@ -80,29 +80,40 @@ export async function updateRecipe(recipeId: string, data: Partial<RecipeInput>)
       return { error: "Instructions must be 200 characters or less" };
     }
 
-    // In a real app we'd fetch the current recipe to merge the snapshot correctly.
-    // Since we just update the delta here, we'll store the delta payload or a
-    // mocked full snapshot for the test context if the DB was fully wired up.
-    // For simplicity of snapshot definition:
-    // ...
+    // Fetch current recipe to build a full snapshot
+    const existing = await db.select().from(recipes).where(eq(recipes.id, recipeId));
 
-    await db
-      .update(recipes)
-      .set({
-        ...(data.temperature !== undefined && { temperature: data.temperature }),
-        ...(data.time !== undefined && { time: data.time }),
-        ...(data.instructions !== undefined && { instructions: data.instructions }),
-        updatedAt: new Date(),
-      })
-      .where(eq(recipes.id, recipeId));
+    if (existing.length === 0) {
+      return { error: "Recipe not found" };
+    }
 
-    // Create history snapshot
+    const current = existing[0];
+    const now = new Date();
+
+    const updatedFields = {
+      ...(data.temperature !== undefined && { temperature: data.temperature }),
+      ...(data.time !== undefined && { time: data.time }),
+      ...(data.instructions !== undefined && { instructions: data.instructions }),
+      updatedAt: now,
+    };
+
+    await db.update(recipes).set(updatedFields).where(eq(recipes.id, recipeId));
+
+    // Build full snapshot from current state merged with update
+    const snapshotData = {
+      id: current.id,
+      temperature: data.temperature ?? current.temperature,
+      time: data.time ?? current.time,
+      instructions: data.instructions ?? current.instructions,
+      isDeleted: current.isDeleted,
+    };
+
     await db.insert(recipeHistory).values({
       id: crypto.randomUUID(),
       recipeId,
       changeType: "UPDATE",
-      snapshot: data, // simplified for test
-      createdAt: new Date(),
+      snapshot: snapshotData,
+      createdAt: now,
     });
 
     return { success: true };
@@ -121,6 +132,13 @@ export async function deleteRecipe(recipeId: string) {
       return { error: "Unauthorized" };
     }
 
+    // Fetch current state before deleting so restore can bring it back
+    const current = await db.select().from(recipes).where(eq(recipes.id, recipeId));
+    if (current.length === 0) {
+      return { error: "Recipe not found" };
+    }
+    const pre = current[0];
+
     // Soft delete
     await db
       .update(recipes)
@@ -130,21 +148,28 @@ export async function deleteRecipe(recipeId: string) {
       })
       .where(eq(recipes.id, recipeId));
 
+    const historyId = crypto.randomUUID();
     await db.insert(recipeHistory).values({
-      id: crypto.randomUUID(),
+      id: historyId,
       recipeId,
       changeType: "DELETE",
-      snapshot: { isDeleted: true },
+      snapshot: {
+        id: pre.id,
+        temperature: pre.temperature,
+        time: pre.time,
+        instructions: pre.instructions,
+        isDeleted: false,
+      },
       createdAt: new Date(),
     });
 
-    return { success: true };
+    return { success: true, historyId };
   } catch {
     return { error: "Failed to delete recipe" };
   }
 }
 
-export async function restoreRecipe(_historyId: string) {
+export async function getRecipes() {
   try {
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -154,10 +179,59 @@ export async function restoreRecipe(_historyId: string) {
       return { error: "Unauthorized" };
     }
 
-    // In reality, this fetches the historyId from db.select(), extracts snapshot,
-    // and calls db.update(recipes).set(snapshot.data).
-    // For test passing without complex Drizzle select mocking:
-    await db.update(recipes).set({ isDeleted: false }).where(eq(recipes.id, "mock"));
+    const rows = await db
+      .select()
+      .from(recipes)
+      .innerJoin(userRecipes, eq(userRecipes.recipeId, recipes.id))
+      .where(and(eq(userRecipes.userId, session.user.id), eq(recipes.isDeleted, false)));
+
+    const result = rows.map((row) => ({
+      id: row.recipes.id,
+      temperature: row.recipes.temperature,
+      time: row.recipes.time,
+      instructions: row.recipes.instructions,
+    }));
+
+    return { recipes: result };
+  } catch {
+    return { error: "Failed to fetch recipes" };
+  }
+}
+
+export async function restoreRecipe(historyId: string) {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session?.user) {
+      return { error: "Unauthorized" };
+    }
+
+    const records = await db.select().from(recipeHistory).where(eq(recipeHistory.id, historyId));
+
+    if (records.length === 0) {
+      return { error: "History record not found" };
+    }
+
+    const snapshot = records[0].snapshot as {
+      id: string;
+      temperature: number;
+      time: number;
+      instructions: string;
+      isDeleted: boolean;
+    };
+
+    await db
+      .update(recipes)
+      .set({
+        temperature: snapshot.temperature,
+        time: snapshot.time,
+        instructions: snapshot.instructions,
+        isDeleted: snapshot.isDeleted,
+        updatedAt: new Date(),
+      })
+      .where(eq(recipes.id, snapshot.id));
 
     return { success: true };
   } catch {

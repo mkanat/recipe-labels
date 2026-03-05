@@ -49,6 +49,7 @@ Create a `.env` file in the root directory and populate it with the required aut
 ```env
 AUTH_SECRET="generate-a-random-secure-string"
 BETTER_AUTH_URL="http://localhost:3000"
+NEXT_PUBLIC_BASE_URL="http://localhost:3000"
 
 # Google OAuth Credentials (Required for Login)
 AUTH_GOOGLE_ID="your-google-oauth-client-id"
@@ -57,6 +58,8 @@ AUTH_GOOGLE_SECRET="your-google-oauth-client-secret"
 # Local SQLite Database
 DATABASE_URL="file:local.db"
 ```
+
+> **Production note:** When deploying to production, set both `BETTER_AUTH_URL` and `NEXT_PUBLIC_BASE_URL` to `https://recipe.kanat.us`.
 
 ### 4. Database Setup
 

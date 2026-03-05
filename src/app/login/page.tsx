@@ -11,7 +11,7 @@ export default function LoginPage() {
     setIsLoggingIn(true);
     await signIn.social({
       provider: "google",
-      callbackURL: "/dashboard",
+      callbackURL: "/",
     });
   };
 
