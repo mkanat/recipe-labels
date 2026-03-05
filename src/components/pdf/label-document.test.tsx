@@ -12,11 +12,7 @@ vi.mock("@react-pdf/renderer", () => ({
     </div>
   ),
   View: ({ children, style }: any) => (
-    <div
-      data-testid="pdf-view"
-      style={style}
-      data-style={JSON.stringify(style)}
-    >
+    <div data-testid="pdf-view" style={style} data-style={JSON.stringify(style)}>
       {children}
     </div>
   ),

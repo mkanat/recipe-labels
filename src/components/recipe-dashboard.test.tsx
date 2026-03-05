@@ -84,7 +84,9 @@ describe("RecipeDashboard", () => {
 
     fireEvent.change(screen.getByLabelText(/temperature/i), { target: { value: "350" } });
     fireEvent.change(screen.getByLabelText(/time/i), { target: { value: "15" } });
-    fireEvent.change(screen.getByLabelText(/instructions/i), { target: { value: "Test instructions." } });
+    fireEvent.change(screen.getByLabelText(/instructions/i), {
+      target: { value: "Test instructions." },
+    });
     fireEvent.click(screen.getByRole("button", { name: /add recipe/i, hidden: true }));
 
     await waitFor(() => {

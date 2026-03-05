@@ -100,7 +100,11 @@ export function RecipeDashboard({ initialRecipes, userEmail }: RecipeDashboardPr
         <div className="flex items-center justify-between">
           <div className="flex space-x-1 rounded-xl bg-zinc-900 p-1">
             <button
-              onClick={() => { setActiveTab("list"); setShowAddForm(false); setEditingRecipe(null); }}
+              onClick={() => {
+                setActiveTab("list");
+                setShowAddForm(false);
+                setEditingRecipe(null);
+              }}
               className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
                 activeTab === "list"
                   ? "bg-zinc-700 text-white"
@@ -110,7 +114,11 @@ export function RecipeDashboard({ initialRecipes, userEmail }: RecipeDashboardPr
               Recipes
             </button>
             <button
-              onClick={() => { setActiveTab("print"); setShowAddForm(false); setEditingRecipe(null); }}
+              onClick={() => {
+                setActiveTab("print");
+                setShowAddForm(false);
+                setEditingRecipe(null);
+              }}
               className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
                 activeTab === "print"
                   ? "bg-zinc-700 text-white"
@@ -123,11 +131,19 @@ export function RecipeDashboard({ initialRecipes, userEmail }: RecipeDashboardPr
 
           {activeTab === "list" && !showAddForm && (
             <button
-              onClick={() => { setShowAddForm(true); setEditingRecipe(null); }}
+              onClick={() => {
+                setShowAddForm(true);
+                setEditingRecipe(null);
+              }}
               className="flex items-center space-x-2 rounded-xl bg-rose-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rose-600"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
               </svg>
               <span>Add Recipe</span>
             </button>
@@ -139,10 +155,7 @@ export function RecipeDashboard({ initialRecipes, userEmail }: RecipeDashboardPr
           <div className="space-y-6">
             {showAddForm && (
               <div className="space-y-4">
-                <RecipeForm
-                  initialData={editingRecipe ?? undefined}
-                  onSubmit={handleFormSubmit}
-                />
+                <RecipeForm initialData={editingRecipe ?? undefined} onSubmit={handleFormSubmit} />
                 <button
                   onClick={handleCancelForm}
                   className="w-full rounded-xl border border-zinc-700 py-3 text-sm font-medium text-zinc-400 transition-colors hover:border-zinc-500 hover:text-zinc-200"
@@ -152,18 +165,12 @@ export function RecipeDashboard({ initialRecipes, userEmail }: RecipeDashboardPr
               </div>
             )}
             {!showAddForm && (
-              <RecipeList
-                recipes={initialRecipes}
-                onDelete={handleDelete}
-                onEdit={handleEdit}
-              />
+              <RecipeList recipes={initialRecipes} onDelete={handleDelete} onEdit={handleEdit} />
             )}
           </div>
         )}
 
-        {activeTab === "print" && (
-          <PrintUI recipes={initialRecipes} onPrint={handlePrint} />
-        )}
+        {activeTab === "print" && <PrintUI recipes={initialRecipes} onPrint={handlePrint} />}
       </main>
     </div>
   );
